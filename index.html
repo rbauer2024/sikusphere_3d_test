@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>SIKU Sphere 3D</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #infoBox {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
+      font-family: sans-serif;
+      max-width: 300px;
+    }
+    #infoTitle { font-weight: bold; color: #0066cc; }
+    #infoText { margin-top: 5px; color: black; }
+  </style>
+</head>
+<body>
+  <div id="infoBox">
+    <div id="infoTitle"></div>
+    <div id="infoText"></div>
+  </div>
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.148.0/build/three.module.js';
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.148.0/examples/jsm/loaders/GLTFLoader.js';
+
+    const models = [
+      { file: 'Steuereinheit.glb', name: 'INNENHAUBE', desc: 'Bedienfeld zur Steuerung der Betriebsarten' },
+      { file: 'Daemmmatte.glb', name: 'SCHALLSCHUTZ', desc: 'Hohe Straßenlärmunterdrückung' },
+      { file: 'Ventilatoreinheit.glb', name: 'VENTILATOR MIT STRÖMUNGSRICHTER', desc: 'Garantiert einen idealen Luftstrom' },
+      { file: 'Filterhalterung.glb', name: 'FILTERHALTERUNG', desc: 'Für den optionalen F7 Feinstaubfilter' },
+      { file: 'Patrone.glb', name: 'WÄRMETAUSCHER', desc: 'Entnimmt gespeicherte Kälte und Feuchtigkeit und reinigt die Luft' },
+      { file: 'Aussenhaube.glb', name: 'AUSSENHAUBE', desc: 'Kein Eindringen von Wasser oder Fremdkörpern. Erhältlich in verschiedenen RAL-Farben' }
+    ];
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const light1 = new THREE.AmbientLight(0xffffff, 0.6);
+    const light2 = new THREE.DirectionalLight(0xffffff, 0.7);
+    light2.position.set(5, 5, 5);
+    scene.add(light1, light2);
+
+    const loader = new GLTFLoader();
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    const loadedMeshes = [];
+
+    models.forEach((model, i) => {
+      loader.load(model.file, gltf => {
+        const mesh = gltf.scene;
+        mesh.position.x = i * 1.5 - 4;
+        mesh.name = model.name;
+        mesh.userData = { description: model.desc };
+        scene.add(mesh);
+        loadedMeshes.push(mesh);
+      });
+    });
+
+    camera.position.z = 10;
+
+    const infoBox = document.getElementById('infoBox');
+    const infoTitle = document.getElementById('infoTitle');
+    const infoText = document.getElementById('infoText');
+
+    function onMouseMove(event) {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    }
+
+    window.addEventListener('mousemove', onMouseMove, false);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(loadedMeshes, true);
+      if (intersects.length > 0) {
+        const mesh = intersects[0].object.parent;
+        infoBox.style.display = 'block';
+        infoTitle.innerText = mesh.name;
+        infoText.innerText = mesh.userData.description;
+      } else {
+        infoBox.style.display = 'none';
+      }
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
