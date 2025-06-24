@@ -1,5 +1,5 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.148.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.148.0/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from './libs/three.module.js';
+import { GLTFLoader } from './libs/GLTFLoader.js';
 
 // Szene, Kamera, Renderer
 const scene = new THREE.Scene();
@@ -14,15 +14,14 @@ document.body.appendChild(renderer.domElement);
 const light = new THREE.AmbientLight(0xffffff, 1);
 scene.add(light);
 
-// Modell laden (achte auf korrekten Pfad)
+// Modell laden
 const loader = new GLTFLoader();
-loader.load('./Steuereinheit.glb', (gltf) => {
+loader.load('./model.glb', (gltf) => {
   scene.add(gltf.scene);
 }, undefined, (error) => {
   console.error(error);
 });
 
-// Animation
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
