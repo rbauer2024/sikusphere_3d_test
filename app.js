@@ -32,7 +32,6 @@ const models = [
   { file: 'Steuereinheit.glb', x: -1.5 },
   { file: 'Daemmmatte.glb', x: -0.9 },
   { file: 'Ventilatoreinheit.glb', x: -0.3 },
-  { file: 'Filterhalterung.glb', x: 0.3 },
   { file: 'Patrone.glb', x: 0.9 },
   { file: 'Aussenhaube.glb', x: 1.5 }
 ];
