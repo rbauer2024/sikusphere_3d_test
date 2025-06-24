@@ -1,57 +1,50 @@
 import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
 
-// Szene, Kamera, Renderer
+// Szene
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf2f2f2); // hellgrauer Hintergrund
 
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-);
-camera.position.set(0, 0.4, 2.5);
-camera.lookAt(new THREE.Vector3(0, 0.2, 0));
+// Kamera
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 1, 4); // etwas zurück und leicht erhöht
 
+// Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0xf0f0f0); // heller Hintergrund
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
 // Licht
-const ambientLight = new THREE.AmbientLight(0xffffff, 1);
-scene.add(ambientLight);
-
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
-hemiLight.position.set(0, 1, 0);
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
+hemiLight.position.set(0, 20, 0);
 scene.add(hemiLight);
 
-// Modell-Dateien und Positionen für Explosionsansicht
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+dirLight.position.set(5, 10, 7);
+dirLight.castShadow = true;
+scene.add(dirLight);
+
+// Modelle
+const loader = new GLTFLoader();
 const models = [
-  { file: 'Steuereinheit.glb', position: [-0.6, 0, 0], name: 'Steuereinheit' },
-  { file: 'Daemmmatte.glb', position: [-0.36, 0, 0], name: 'Daemmmatte' },
-  { file: 'Ventilatoreinheit.glb', position: [-0.12, 0, 0], name: 'Ventilatoreinheit' },
-  { file: 'Filterhalterung.glb', position: [0.12, 0, 0], name: 'Filterhalterung' },
-  { file: 'Patrone.glb', position: [0.36, 0, 0], name: 'Patrone' },
-  { file: 'Aussenhaube.glb', position: [0.6, 0, 0], name: 'Aussenhaube' }
+  { file: 'Steuereinheit.glb', x: -1.5 },
+  { file: 'Daemmmatte.glb', x: -0.9 },
+  { file: 'Ventilatoreinheit.glb', x: -0.3 },
+  { file: 'Filterhalterung.glb', x: 0.3 },
+  { file: 'Patrone.glb', x: 0.9 },
+  { file: 'Aussenhaube.glb', x: 1.5 }
 ];
 
-// Modelle laden
-const loader = new GLTFLoader();
-models.forEach(({ file, position, name }) => {
-  loader.load(
-    file,
-    (gltf) => {
-      const model = gltf.scene;
-      model.position.set(...position);
-      scene.add(model);
-      console.log(`✅ Modell geladen: ${name}`);
-    },
-    undefined,
-    (error) => {
-      console.error(`❌ Fehler beim Laden von ${file}:`, error);
-    }
-  );
+models.forEach(({ file, x }) => {
+  loader.load(`./${file}`, (gltf) => {
+    const model = gltf.scene;
+    model.position.set(x, 0, 0);
+    scene.add(model);
+  }, undefined, (error) => {
+    console.error(`Fehler beim Laden von ${file}:`, error);
+  });
 });
 
 // Animation
@@ -60,10 +53,3 @@ function animate() {
   renderer.render(scene, camera);
 }
 animate();
-
-// Responsives Verhalten
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
