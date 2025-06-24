@@ -20,7 +20,7 @@ loader.load('model.glb', (gltf) => {
   console.error(error);
 });
 
-// Animation
+// Render-Loop
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
