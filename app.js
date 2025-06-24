@@ -16,7 +16,7 @@ scene.add(light);
 
 // Modell laden
 const loader = new GLTFLoader();
-loader.load('./model.glb', (gltf) => {
+loader.load('./Steuereinheit.glb', (gltf) => {
   scene.add(gltf.scene);
 }, undefined, (error) => {
   console.error(error);
