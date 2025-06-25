@@ -11,31 +11,29 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(0, 2, 10);
+camera.position.set(0, 1, 8); // näher ran
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Licht
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
 scene.add(ambientLight);
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
-directionalLight.position.set(5, 10, 7.5);
+directionalLight.position.set(5, 10, 5);
 scene.add(directionalLight);
 
-// OrbitControls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
-// Modelle & Pfade
+// Modelle mit spezifischem Offset & Rotation
 const modelInfos = [
-  { file: 'models/Steuereinheit.glb' },
-  { file: 'models/Daemmmatte.glb' },
-  { file: 'models/Ventilatoreinheit.glb' },
-  { file: 'models/Patrone.glb' },
-  { file: 'models/Aussenhaube.glb' },
+  { file: 'models/Steuereinheit.glb',   offset: 0,    rotationY: Math.PI / 2 },
+  { file: 'models/Daemmmatte.glb',      offset: 1.1,  rotationY: Math.PI },
+  { file: 'models/Ventilatoreinheit.glb', offset: 2.2,  rotationY: Math.PI },
+  { file: 'models/Patrone.glb',         offset: 3.3,  rotationY: Math.PI },
+  { file: 'models/Aussenhaube.glb',     offset: 4.4,  rotationY: Math.PI },
 ];
 
 const loader = new GLTFLoader();
@@ -47,23 +45,23 @@ modelInfos.forEach((info, i) => {
   loader.load(info.file, gltf => {
     const model = gltf.scene;
     model.scale.set(0.2, 0.2, 0.2);
-    model.position.set(i * 2, 0, 0); // kleinerer Abstand
-    model.rotation.y = Math.PI / 2 + Math.PI; // 180° + 90°
+    model.position.set(info.offset, 0, 0);
+    model.rotation.y = info.rotationY;
     group.add(model);
   });
 });
 
-// Gesamte Gruppe leicht drehen
+// Gesamte Gruppe etwas drehen
 group.rotation.y = THREE.MathUtils.degToRad(-15);
 
-// Resize
+// Fenstergrößen-Anpassung
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Animate
+// Animation
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
