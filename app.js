@@ -2,66 +2,71 @@ import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
 import { OrbitControls } from './libs/OrbitControls.js';
 
-let scene, camera, renderer, controls;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf0f0f0);
 
-init();
+const camera = new THREE.PerspectiveCamera(
+  45,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
+camera.position.set(0, 2, 10);
 
-function init() {
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xf0f0f0); // Hellgrauer Hintergrund
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(0, 1, 5); // Kamera leicht schräg von vorne
-  camera.lookAt(0, 0, 0);
+// Licht
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+scene.add(ambientLight);
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+directionalLight.position.set(5, 10, 7.5);
+scene.add(directionalLight);
 
-  // OrbitControls aktivieren
-  controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.05;
+// OrbitControls
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
 
-  // Licht hinzufügen
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambientLight);
+// Modelle & Pfade
+const modelInfos = [
+  { file: 'models/Steuereinheit.glb' },
+  { file: 'models/Daemmmatte.glb' },
+  { file: 'models/Ventilatoreinheit.glb' },
+  { file: 'models/Patrone.glb' },
+  { file: 'models/Aussenhaube.glb' },
+];
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-  directionalLight.position.set(5, 5, 5);
-  scene.add(directionalLight);
+const loader = new GLTFLoader();
+const group = new THREE.Group();
+scene.add(group);
 
-  // Modelle laden
-  const loader = new GLTFLoader();
-
-  const modelInfos = [
-    { file: 'models/Steuereinheit.glb', x: -2 },
-    { file: 'models/Daemmmatte.glb', x: -1 },
-    { file: 'models/Ventilatoreinheit.glb', x: 0 },
-    { file: 'models/Patrone.glb', x: 1 },
-    { file: 'models/Aussenhaube.glb', x: 2 },
-  ];
-
-modelInfos.forEach(info => {
+// Modelle laden
+modelInfos.forEach((info, i) => {
   loader.load(info.file, gltf => {
     const model = gltf.scene;
-
-    model.position.set(info.x, 0, 0);                         // Position in Reihe
-    model.scale.set(0.2, 0.2, 0.2);                          // ✅ Modell verkleinern
-    model.rotation.y = Math.PI / 2 + Math.PI;                // ✅ 90° + 180° = 270° drehen (Y-Achse)
-
-    scene.add(model);
-  }, undefined, error => {
-    console.error('Fehler beim Laden von', info.file, error);
+    model.scale.set(0.2, 0.2, 0.2);
+    model.position.set(i * 2, 0, 0); // kleinerer Abstand
+    model.rotation.y = Math.PI / 2 + Math.PI; // 180° + 90°
+    group.add(model);
   });
 });
 
-  animate();
-}
+// Gesamte Gruppe leicht drehen
+group.rotation.y = THREE.MathUtils.degToRad(-15);
 
+// Resize
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Animate
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
 }
-
+animate();
