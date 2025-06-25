@@ -47,7 +47,7 @@ modelInfos.forEach(info => {
     const model = gltf.scene;
 
     model.position.set(info.x, 0, 0);                         // Position in Reihe
-    model.scale.set(0.5, 0.5, 0.5);                          // ✅ Modell verkleinern
+    model.scale.set(0.4, 0.4, 0.4);                          // ✅ Modell verkleinern
     model.rotation.y = Math.PI / 2 + Math.PI;                // ✅ 90° + 180° = 270° drehen (Y-Achse)
 
     scene.add(model);
