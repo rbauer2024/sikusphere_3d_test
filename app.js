@@ -17,7 +17,8 @@ function init() {
     0.1,
     100
   );
-  camera.position.set(0, 0, 2.5);
+  camera.position.set(1.5, 1.2, 1.8); // leichte Schrägsicht von außen
+  camera.lookAt(0, 0, 0);
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
