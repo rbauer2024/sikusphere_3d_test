@@ -1,68 +1,60 @@
 import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
 
-let scene, camera, renderer;
-let models = [];
-const fileNames = [
-  'Aussenhaube.glb',
-  'Patrone.glb',
-  'Ventilatoreinheit.glb',
-  'Daemmmatte.glb',
-  'Steuereinheit.glb'
-];
+let camera, scene, renderer;
 
 init();
 animate();
 
 function init() {
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xf2f2f2);
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf5f5f5);
 
-  // Kamera links außen, 20° nach rechts geneigt
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(-1.5, 0.5, 2.5);
-  camera.lookAt(0, 0, 0);
+    camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(-2.5, 1.0, 2.5);  // leicht von links oben, schaut schräg hinein
+    camera.lookAt(0.5, 0.2, 0); // Zielpunkt: zentral auf Achse
 
-  // Licht
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambientLight);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  directionalLight.position.set(2, 2, 2);
-  scene.add(directionalLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    directionalLight.position.set(5, 5, 5);
+    scene.add(directionalLight);
 
-  // Renderer
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-  // GLB-Modelle laden
-  const loader = new GLTFLoader();
-  let startX = 2.0; // ganz rechts außen
-  const spacing = 0.01; // 1 cm Abstand
+    const loader = new GLTFLoader();
 
-  fileNames.forEach((file, index) => {
-    loader.load(`./models/${file}`, (gltf) => {
-      const model = gltf.scene;
-      model.scale.set(0.2, 0.2, 0.2);
-      model.position.set(startX - index * (spacing + 0.3), 0, 0); // Abstand & Reihenfolge
-      model.rotation.y = -Math.PI / 9; // ca. 20° Drehung nach links
-      scene.add(model);
-      models.push(model);
+    const files = [
+        { file: 'Aussenhaube.glb', x: 0.00 },
+        { file: 'Patrone.glb',     x: 0.12 },
+        { file: 'Ventilatoreinheit.glb', x: 0.24 },
+        { file: 'Daemmmatte.glb',  x: 0.36 },
+        { file: 'Steuereinheit.glb', x: 0.48 },
+    ];
+
+    files.forEach(({ file, x }) => {
+        loader.load(`models/${file}`, function (gltf) {
+            const model = gltf.scene;
+            model.scale.set(0.2, 0.2, 0.2);
+            model.rotation.y = -Math.PI / 12; // ca. -15 Grad
+            model.position.set(x, 0, 0);
+            scene.add(model);
+        });
     });
-  });
 
-  // Resizing
-  window.addEventListener('resize', onWindowResize, false);
+    window.addEventListener('resize', onWindowResize);
 }
 
 function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function animate() {
-  requestAnimationFrame(animate);
-  renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
 }
