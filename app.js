@@ -1,67 +1,61 @@
+// app.js – Darstellung der SIKU Sphere in sauberer Explosionsansicht
+
 import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
-import { OrbitControls } from './libs/OrbitControls.js';
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf7f7f7);
-
-const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.set(-2, 0.8, 2.5);
-camera.lookAt(0, 0.3, 0);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-// Licht
-const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
-scene.add(ambientLight);
-
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-dirLight.position.set(5, 5, 5);
-scene.add(dirLight);
-
-// Controls
-const controls = new OrbitControls(camera, renderer.domElement);
-
-const loader = new GLTFLoader();
-const modelFiles = [
-  'models/Steuereinheit.glb',      // jetzt links
-  'models/Daemmmatte.glb',
-  'models/Ventilatoreinheit.glb',
-  'models/Patrone.glb',
-  'models/Aussenhaube.glb'         // jetzt rechts
+let camera, scene, renderer;
+const components = [
+  { file: 'Steuereinheit.glb', position: [-2.5, 0, 0], name: 'INNENHAUBE' },
+  { file: 'Daemmmatte.glb',    position: [-1.25, 0, 0], name: 'SCHALLSCHUTZ' },
+  { file: 'Ventilatoreinheit.glb', position: [0, 0, 0], name: 'VENTILATOR' },
+  { file: 'Patrone.glb',       position: [1.25, 0, 0], name: 'WÄRMETAUSCHER' },
+  { file: 'Aussenhaube.glb',   position: [2.5, 0, 0], name: 'AUSSENHAUBE' },
 ];
 
-const spacing = 0.05; // größerer Abstand = bessere Sichtbarkeit
-let startX = 0;
+init();
+animate();
 
-modelFiles.forEach((path, index) => {
-  loader.load(path, (gltf) => {
-    const model = gltf.scene;
-    model.scale.set(0.3, 0.3, 0.3); // etwas größer für mehr Klarheit
+function init() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf8f8f8);
 
-    // Spiegeln um Y-Achse (180° Drehung)
-    model.rotation.y = Math.PI;
+  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(-5, 2, 5);
+  camera.lookAt(0, 0, 0);
 
-    model.position.x = startX;
-    startX += spacing;
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+  scene.add(ambientLight);
 
-    scene.add(model);
-  }, undefined, (error) => {
-    console.error(`Fehler beim Laden von ${path}:`, error);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+  dirLight.position.set(5, 10, 10);
+  scene.add(dirLight);
+
+  const loader = new GLTFLoader();
+  const scale = 0.2;
+  const rotationY = -Math.PI / 12; // ca. -15°
+
+  components.forEach(({ file, position }) => {
+    loader.load(`models/${file}`, (gltf) => {
+      const model = gltf.scene;
+      model.scale.set(scale, scale, scale);
+      model.rotation.y = rotationY;
+      model.position.set(...position);
+      scene.add(model);
+    });
   });
-});
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+}
 
 function animate() {
   requestAnimationFrame(animate);
-  controls.update();
   renderer.render(scene, camera);
 }
-animate();
-
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
