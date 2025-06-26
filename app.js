@@ -22,14 +22,14 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
 directionalLight.position.set(2, 2, 2);
 scene.add(directionalLight);
 
-// Modellpfade und Positionen
+// Modellpfade und neue, enger gesetzte Positionen
 const loader = new GLTFLoader();
 const modelPaths = [
-  { path: './models/Steuereinheit.glb', x: -0.2 },
-  { path: './models/Daemmmatte.glb', x: 0.0 },
-  { path: './models/Ventilatoreinheit.glb', x: 0.2 },
-  { path: './models/Patrone.glb', x: 0.4 },
-  { path: './models/Aussenhaube.glb', x: 0.6 }
+  { path: './models/Steuereinheit.glb', x: -0.16 },
+  { path: './models/Daemmmatte.glb', x: -0.08 },
+  { path: './models/Ventilatoreinheit.glb', x: 0.0 },
+  { path: './models/Patrone.glb', x: 0.08 },
+  { path: './models/Aussenhaube.glb', x: 0.16 }
 ];
 
 // Modelle laden
@@ -37,7 +37,7 @@ modelPaths.forEach((model) => {
   loader.load(model.path, (gltf) => {
     const object = gltf.scene;
     object.position.set(model.x, 0, 0);
-    object.rotation.y = 3.49; // 200° Y-Achse
+    object.rotation.y = 3.40; // 195° Y-Achse
     object.scale.set(0.2, 0.2, 0.2);
     scene.add(object);
   });
