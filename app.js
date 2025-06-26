@@ -3,13 +3,12 @@ import { GLTFLoader } from './libs/GLTFLoader.js';
 import { OrbitControls } from './libs/OrbitControls.js';
 
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf7f7f7); // heller Hintergrund
 
-// Kamera aus Referenz: leicht links und schräg zur Explosionsreihe
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.set(-1.2, 0.3, 1.5); // seitlich versetzt und leicht erhöht
-camera.lookAt(0, 0.2, 0);
+const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(-2, 0.8, 2.5); // neue Kameraposition (leicht links oben vorne)
+camera.lookAt(0, 0.3, 0); // Blick auf das Zentrum
 
-// Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -18,36 +17,54 @@ document.body.appendChild(renderer.domElement);
 const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
 scene.add(ambientLight);
 
-// Orbit Controls (optional, kann deaktiviert werden)
+// Controls (nur zur Vorschau)
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
 
-// Modellnamen und Positionen
-const models = [
-  { file: 'Aussenhaube.glb', positionX: -0.24 },
-  { file: 'Patrone.glb', positionX: -0.12 },
-  { file: 'Ventilatoreinheit.glb', positionX: 0.0 },
-  { file: 'Daemmmatte.glb', positionX: 0.12 },
-  { file: 'Steuereinheit.glb', positionX: 0.24 },
+// Modelle laden
+const loader = new GLTFLoader();
+const modelFiles = [
+  'models/Aussenhaube.glb',
+  'models/Patrone.glb',
+  'models/Ventilatoreinheit.glb',
+  'models/Daemmmatte.glb',
+  'models/Steuereinheit.glb',
 ];
 
-const loader = new GLTFLoader();
+const spacing = 0.01; // ~1 cm Abstand
+let startX = 0;
 
-models.forEach(({ file, positionX }) => {
-  loader.load(`models/${file}`, (gltf) => {
+modelFiles.forEach((path, index) => {
+  loader.load(path, (gltf) => {
     const model = gltf.scene;
-    model.scale.set(0.2, 0.2, 0.2);
-    model.rotation.y = -Math.PI / 12; // ≈ -15°
-    model.position.set(positionX, 0, 0);
+    model.scale.set(0.2, 0.2, 0.2); // Einheitliche Skalierung
+
+    model.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
+    model.position.x = startX;
+    startX += spacing; // Abstand auf X-Achse erhöhen
+
     scene.add(model);
   }, undefined, (error) => {
-    console.error(`Fehler beim Laden von ${file}:`, error);
+    console.error(`Fehler beim Laden von ${path}:`, error);
   });
 });
 
+// Animation
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
 }
 animate();
+
+// Bei Größenänderung
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
