@@ -1,52 +1,58 @@
-// app.js (3D Szene mit korrekter Ausrichtung und Kamera)
-
 import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
 
-let scene, camera, renderer;
+// Szene & Kamera
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf5f5f5);
 
-init();
+const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(-2.5, 0.5, 2.5);
+camera.lookAt(0, 0, 0);
 
-function init() {
-  scene = new THREE.Scene();
+// Renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-  // Kamera von links vorne mit 15°-20° Winkel
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(-2.5, 1.5, 3); // Links, leicht oben, nach rechts blickend
-  camera.lookAt(0, 0.5, 0);
+// Licht
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambientLight);
 
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(2, 2, 2);
+scene.add(directionalLight);
 
-  const light = new THREE.DirectionalLight(0xffffff, 1);
-  light.position.set(5, 10, 7.5);
-  scene.add(light);
+// Hilfsfunktion zum Laden
+const loader = new GLTFLoader();
+const modelPaths = [
+  { path: './models/Steuereinheit.glb', x: -0.2 },
+  { path: './models/Daemmmatte.glb', x: 0.0 },
+  { path: './models/Ventilatoreinheit.glb', x: 0.2 },
+  { path: './models/Patrone.glb', x: 0.4 },
+  { path: './models/Aussenhaube.glb', x: 0.6 }
+];
 
-  const ambient = new THREE.AmbientLight(0xffffff, 0.5);
-  scene.add(ambient);
-
-  loadModel('models/Aussenhaube.glb',   0.4);
-  loadModel('models/Patrone.glb',       0.3);
-  loadModel('models/Ventilatoreinheit.glb', 0.2);
-  loadModel('models/Daemmmatte.glb',    0.1);
-  loadModel('models/Steuereinheit.glb', 0.0);
-
-  animate();
-}
-
-function loadModel(path, xOffset) {
-  const loader = new GLTFLoader();
-  loader.load(path, function (gltf) {
-    const model = gltf.scene;
-    model.scale.set(0.2, 0.2, 0.2);
-    model.rotation.y = -Math.PI / 12; // -15 Grad
-    model.position.x = xOffset;
-    scene.add(model);
+// Modelle laden
+modelPaths.forEach((model, i) => {
+  loader.load(model.path, (gltf) => {
+    const object = gltf.scene;
+    object.position.set(model.x, 0, 0);
+    object.rotation.y = 3.054; // 190° Y-Rotation
+    object.scale.set(0.2, 0.2, 0.2); // falls nötig
+    scene.add(object);
   });
-}
+});
 
+// Animation
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
 }
+animate();
+
+// Responsives Resizing
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
