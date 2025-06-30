@@ -11,7 +11,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(-1.6, 0.6, 3.8); 
+camera.position.set(-2.2, 0.6, 3.8); 
 camera.lookAt(0.8, 0.2, 0);
 
 // Renderer mit hoher Schärfe
