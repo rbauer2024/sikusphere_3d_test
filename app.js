@@ -4,14 +4,15 @@ import { GLTFLoader } from './libs/GLTFLoader.js';
 const scene = new THREE.Scene();
 
 // Kamera: Beibehaltung der bewährten Position und Rotation
+// Kamera: flacherer Winkel
 const camera = new THREE.PerspectiveCamera(
   45,
   window.innerWidth / window.innerHeight,
   0.1,
   1000
 );
-camera.position.set(-2.5, 1.5, 3.5); // vorher getestete perfekte Position
-camera.lookAt(0, 0, 0);
+camera.position.set(-2.5, 1.1, 3.5); // vorher 1.5 → jetzt 1.1 (tiefer = flacher)
+camera.lookAt(0, 0.2, 0); // Blick leicht angehoben
 
 // Renderer mit hoher Schärfe
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
