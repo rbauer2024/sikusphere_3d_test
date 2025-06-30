@@ -11,8 +11,8 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(-5.2, 0.4, 3.5); // vorher 1.5 → jetzt 1.1 (tiefer = flacher)
-camera.lookAt(0, 0.15, 0); // Blick leicht angehoben
+camera.position.set(-2.5, 0.4, 3.5);
+camera.lookAt(0.2, 0.15, 0); // etwas weiter rechts schauen = mehr von vorne
 
 // Renderer mit hoher Schärfe
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
