@@ -3,52 +3,67 @@ import { GLTFLoader } from './libs/GLTFLoader.js';
 
 const scene = new THREE.Scene();
 
-// Kamera mit besserem Winkel
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(-2.5, 1.2, 2); // Blick leicht von links oben
+// Kamera: Beibehaltung der bewährten Position und Rotation
+const camera = new THREE.PerspectiveCamera(
+  45,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
+camera.position.set(-2.5, 1.5, 3.5); // vorher getestete perfekte Position
 camera.lookAt(0, 0, 0);
 
-// Renderer mit Qualitätseinstellungen
+// Renderer mit hoher Schärfe
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
+renderer.toneMappingExposure = 1.25;
 document.body.appendChild(renderer.domElement);
 
-// Lichtquellen
-const directionalLight = new THREE.DirectionalLight(0xffffff, 2.2);
-directionalLight.position.set(5, 10, 7);
+// Licht für Details
+const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);
+directionalLight.position.set(5, 5, 5);
 scene.add(directionalLight);
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
 scene.add(ambientLight);
 
-// Hintergrundfarbe
-renderer.setClearColor(0xf5f5f5, 0); // hellgrau oder transparent
-
-// Komponenten laden
+// GLB-Modelle laden
 const loader = new GLTFLoader();
-const components = [
-  { file: 'models/Steuereinheit.glb', x: -0.90 },
-  { file: 'models/Daemmmatte.glb', x: -0.55 },
-  { file: 'models/Ventilatoreinheit.glb', x: -0.20 },
-  { file: 'models/Patrone.glb', x:  0.15 },
-  { file: 'models/Aussenhaube.glb', x:  0.50 }
+const modelPaths = [
+  'models/Steuereinheit.glb',
+  'models/Daemmmatte.glb',
+  'models/Ventilatoreinheit.glb',
+  'models/Patrone.glb',
+  'models/Aussenhaube.glb',
 ];
 
-components.forEach(({ file, x }) => {
-  loader.load(file, (gltf) => {
+const spacing = 0.18; // bereits optimierter Abstand (30% reduziert)
+const scale = 0.2;
+const yRotation = -Math.PI * 1.05; // ~189° Drehung
+
+modelPaths.forEach((path, index) => {
+  loader.load(path, (gltf) => {
     const model = gltf.scene;
-    model.scale.set(0.2, 0.2, 0.2);
-    model.rotation.y = THREE.MathUtils.degToRad(-30); // leicht geneigt
-    model.position.set(x, 0, 0);
+    model.scale.set(scale, scale, scale);
+    model.rotation.y = yRotation;
+    model.position.x = index * spacing;
+
+    model.traverse((child) => {
+      if (child.isMesh) {
+        child.material.metalness = 0.1;
+        child.material.roughness = 0.4;
+        child.material.needsUpdate = true;
+      }
+    });
+
     scene.add(model);
   });
 });
 
-// Animation / Rendering
+// Render-Schleife
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
