@@ -20,7 +20,7 @@ function init() {
     0.1,
     1000
   );
-  camera.position.set(-18, 4, 2);
+  camera.position.set(-6, 2, 1);
   camera.lookAt(0, 1.2, 0);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
