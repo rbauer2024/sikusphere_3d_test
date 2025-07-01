@@ -1,86 +1,61 @@
-// app.js
-
 import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
-import { OrbitControls } from './libs/OrbitControls.js';
-import gsap from 'https://cdn.skypack.dev/gsap';
 
-let scene, camera, renderer, controls;
-let parts = [];
-let originalPositions = [];
+let camera, scene, renderer;
 
 init();
+animate();
 
 function init() {
   scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xffffff);
 
-  camera = new THREE.PerspectiveCamera(
-    40,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-  );
-  camera.position.set(-6, 2, 1);
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(-3.5, 1.2, 3); // leicht links + leicht erhöht
   camera.lookAt(0, 1.2, 0);
 
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+  scene.add(ambientLight);
+
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  directionalLight.position.set(10, 10, 10);
+  scene.add(directionalLight);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  controls = new OrbitControls(camera, renderer.domElement);
-  controls.enablePan = false;
-  controls.enableZoom = false;
-  controls.enableRotate = false;
-
-  const light = new THREE.AmbientLight(0xffffff, 1.2);
-  scene.add(light);
-
-  const directional = new THREE.DirectionalLight(0xffffff, 1);
-  directional.position.set(5, 10, 5);
-  scene.add(directional);
-
-  loadModels();
-  animate();
-
-  renderer.domElement.addEventListener('mouseenter', explode);
-  renderer.domElement.addEventListener('mouseleave', implode);
-}
-
-function loadModels() {
   const loader = new GLTFLoader();
-  const files = [
-    { file: 'Aussenhaube.glb', offset: -2.0 },
-    { file: 'Patrone.glb', offset: -1.0 },
-    { file: 'Ventilatoreinheit.glb', offset: 0.0 },
-    { file: 'Daemmmatte.glb', offset: 1.0 },
-    { file: 'Steuereinheit.glb', offset: 2.0 }
+
+  // Skalierung und Abstände
+  const modelScale = 0.2;
+  const spacing = 0.12;
+
+  const parts = [
+    { file: 'Steuereinheit.glb', x: 0 },
+    { file: 'Daemmmatte.glb', x: spacing * 1 },
+    { file: 'Ventilatoreinheit.glb', x: spacing * 2 },
+    { file: 'Patrone.glb', x: spacing * 3 },
+    { file: 'Aussenhaube.glb', x: spacing * 4 }
   ];
 
-  files.forEach(({ file, offset }, index) => {
-    loader.load(`models/${file}`, (gltf) => {
+  parts.forEach((part, index) => {
+    loader.load(`models/${part.file}`, gltf => {
       const model = gltf.scene;
-      model.scale.set(0.2, 0.2, 0.2);
-      model.rotation.y = Math.PI; // 180 Grad
-      model.position.x = offset;
-
+      model.scale.set(modelScale, modelScale, modelScale);
+      model.position.set(part.x, 0, 0);
+      model.rotation.y = Math.PI; // 180° Drehung
       scene.add(model);
-      parts[index] = model;
-      originalPositions[index] = model.position.clone();
     });
   });
+
+  window.addEventListener('resize', onWindowResize);
 }
 
-function explode() {
-  parts.forEach((part, i) => {
-    const direction = i - 2; // 0 = center
-    gsap.to(part.position, { x: originalPositions[i].x + direction * 0.4, duration: 0.5 });
-  });
-}
-
-function implode() {
-  parts.forEach((part, i) => {
-    gsap.to(part.position, { x: originalPositions[i].x, duration: 0.5 });
-  });
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function animate() {
