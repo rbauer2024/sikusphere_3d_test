@@ -11,7 +11,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(-4.2, 1.0, 3.0); // etwas mehr seitlich      // X = 0 (zentral), Y = 0.4 (etwas über dem Boden), Z = 4.5 (Abstand)
+camera.position.set(-4.2, 1.0, 2.0); // etwas mehr seitlich      // X = 0 (zentral), Y = 0.4 (etwas über dem Boden), Z = 4.5 (Abstand)
 camera.lookAt(0, 0.1, 0);             // Blickpunkt bleibt leicht nach oben gerichtet
 
 // Renderer mit hoher Schärfe
