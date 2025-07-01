@@ -14,7 +14,7 @@ function init() {
 
   // Kamera
   camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(-4.2, 1.0, 2.0); // seitlich & leicht erhöht
+  camera.position.set(-4.5, 1.1, 1.5); // seitlich & leicht erhöht
   camera.lookAt(0, 0.1, 0);            // Blick auf Zentrum leicht nach oben
 
   // Renderer
