@@ -14,7 +14,7 @@ function init() {
   // Kamera – Position links außen, leicht schräg
   camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 100);
   camera.position.set(-18, 4, 2);
-  camera.lookAt(0, 1.2, 0);
+  camera.lookAt(-1, 1.2, 0);
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xffffff);
