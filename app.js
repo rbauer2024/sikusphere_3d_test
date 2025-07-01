@@ -1,72 +1,76 @@
 import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
+import { OrbitControls } from './libs/OrbitControls.js';
 
-const scene = new THREE.Scene();
+let camera, scene, renderer, controls;
 
-// Kamera: Beibehaltung der bewährten Position und Rotation
-// Kamera: flacherer Winkel
-const camera = new THREE.PerspectiveCamera(
-  45,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-);
-camera.position.set(-4.2, 1.0, 2.0); // etwas mehr seitlich      // X = 0 (zentral), Y = 0.4 (etwas über dem Boden), Z = 4.5 (Abstand)
-camera.lookAt(0, 0.1, 0);             // Blickpunkt bleibt leicht nach oben gerichtet
+init();
+animate();
 
-// Renderer mit hoher Schärfe
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.25;
-document.body.appendChild(renderer.domElement);
+function init() {
+  // Szene erstellen
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xffffff);
 
-// Licht für Details
-const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);
-directionalLight.position.set(5, 5, 5);
-scene.add(directionalLight);
+  // Kamera
+  camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(-4.2, 1.0, 2.0); // seitlich & leicht erhöht
+  camera.lookAt(0, 0.1, 0);            // Blick auf Zentrum leicht nach oben
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
-scene.add(ambientLight);
+  // Renderer
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
 
-// GLB-Modelle laden
-const loader = new GLTFLoader();
-const modelPaths = [
-  'models/Steuereinheit.glb',
-  'models/Daemmmatte.glb',
-  'models/Ventilatoreinheit.glb',
-  'models/Patrone.glb',
-  'models/Aussenhaube.glb',
-];
+  // Licht
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambientLight);
 
-const spacing = 0.18; // bereits optimierter Abstand (30% reduziert)
-const scale = 0.2;
-const yRotation = -Math.PI * 1.05; // ~189° Drehung
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  directionalLight.position.set(5, 5, 5);
+  scene.add(directionalLight);
 
-modelPaths.forEach((path, index) => {
-  loader.load(path, (gltf) => {
-    const model = gltf.scene;
-    model.scale.set(scale, scale, scale);
-    model.rotation.y = yRotation;
-    model.position.x = index * spacing;
+  // OrbitControls
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.enableZoom = false;
+  controls.enablePan = false;
+  controls.minPolarAngle = Math.PI / 3; // etwas nach unten
+  controls.maxPolarAngle = Math.PI / 2;
 
-    model.traverse((child) => {
-      if (child.isMesh) {
-        child.material.metalness = 0.1;
-        child.material.roughness = 0.4;
-        child.material.needsUpdate = true;
-      }
+  // Komponenten laden
+  const models = [
+    { file: 'models/Steuereinheit.glb', position: [-1.2, 0, 0] },
+    { file: 'models/Daemmmatte.glb',    position: [-0.6, 0, 0] },
+    { file: 'models/Ventilatoreinheit.glb', position: [0.0, 0, 0] },
+    { file: 'models/Patrone.glb',       position: [0.6, 0, 0] },
+    { file: 'models/Aussenhaube.glb',   position: [1.2, 0, 0] }
+  ];
+
+  const loader = new GLTFLoader();
+
+  models.forEach(model => {
+    loader.load(model.file, gltf => {
+      const obj = gltf.scene;
+      obj.scale.set(0.2, 0.2, 0.2);
+      obj.position.set(...model.position);
+      obj.rotation.y = THREE.MathUtils.degToRad(-15); // leichter seitlicher Winkel
+      scene.add(obj);
     });
-
-    scene.add(model);
   });
-});
 
-// Render-Schleife
+  // Fenstergrößen-Anpassung
+  window.addEventListener('resize', onWindowResize);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
 function animate() {
   requestAnimationFrame(animate);
+  controls.update();
   renderer.render(scene, camera);
 }
-animate();
