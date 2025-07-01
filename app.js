@@ -1,24 +1,8 @@
 import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
+import { OrbitControls } from './libs/OrbitControls.js';
 
-let scene, camera, renderer, raycaster, mouse;
-const componentFiles = [
-  { file: 'Aussenhaube.glb', position: [1.3, 0, 0], name: 'AUSSENHAUBE' },
-  { file: 'Patrone.glb', position: [0.9, 0, 0], name: 'WÄRMETAUSCHER' },
-  { file: 'Ventilatoreinheit.glb', position: [0.5, 0, 0], name: 'VENTILATOR MIT STRÖMUNGSRICHTER' },
-  { file: 'Daemmmatte.glb', position: [0.1, 0, 0], name: 'SCHALLSCHUTZ' },
-  { file: 'Steuereinheit.glb', position: [-0.3, 0, 0], name: 'INNENHAUBE' }
-];
-
-const infoText = {
-  'AUSSENHAUBE': 'Kein Eindringen von Wasser oder Fremdkörpern. Erhältlich in verschiedenen RAL-Farben.',
-  'WÄRMETAUSCHER': 'Entnimmt gespeicherte Kälte und Feuchtigkeit und reinigt die Luft',
-  'VENTILATOR MIT STRÖMUNGSRICHTER': 'Garantiert einen idealen Luftstrom und -austausch',
-  'SCHALLSCHUTZ': 'Hohe Straßenlärmunterdrückung',
-  'INNENHAUBE': 'Bedienfeld zur Steuerung der Betriebsarten.'
-};
-
-const highlightColor = 0x007BFF;
+let camera, scene, renderer, controls;
 
 init();
 animate();
@@ -27,85 +11,83 @@ function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xffffff);
 
-  // Kamera exakt nach Vorlage
-  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(-2.2, 0.6, 1.6);
-  camera.lookAt(0, 0.2, 0);
+  // Licht
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
+  scene.add(ambientLight);
+
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  directionalLight.position.set(2, 2, 5);
+  scene.add(directionalLight);
+
+  // Kamera – von außen (rechts) auf das Modell blickend
+  camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(-4.2, 1.0, 2.0); // seitlich links, leicht erhöht
+  camera.lookAt(0, 0.2, 0);            // leicht über Zentrum
 
   // Renderer
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  // Licht
-  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
-  directionalLight.position.set(5, 10, 7.5);
-  scene.add(directionalLight);
+  // OrbitControls (falls nötig)
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.target.set(0, 0.2, 0);
+  controls.update();
 
-  // Interaktion
-  raycaster = new THREE.Raycaster();
-  mouse = new THREE.Vector2();
-
-  window.addEventListener('mousemove', onMouseMove, false);
-  window.addEventListener('resize', onWindowResize, false);
-
-  loadModels();
-  createInfoBox();
-}
-
-function loadModels() {
+  // Loader & Positionierung
   const loader = new GLTFLoader();
-  componentFiles.forEach(component => {
-    loader.load(`models/${component.file}`, gltf => {
-      const model = gltf.scene;
-      model.position.set(...component.position);
-      model.name = component.name;
-      model.scale.set(0.2, 0.2, 0.2);
-      model.rotation.y = -Math.PI / 12; // ~-15°
-      scene.add(model);
-    });
-  });
-}
 
-function onMouseMove(event) {
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-}
-
-function animate() {
-  requestAnimationFrame(animate);
-
-  raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObjects(scene.children, true);
-
-  let intersectedComponent = null;
-
-  intersects.forEach(intersect => {
-    if (intersect.object.parent && infoText[intersect.object.parent.name]) {
-      intersectedComponent = intersect.object.parent;
-    }
+  // 1. Innenhaube (ganz links)
+  loader.load('./models/Steuereinheit.glb', (gltf) => {
+    const model = gltf.scene;
+    model.scale.set(0.2, 0.2, 0.2);
+    model.position.set(-3.0, 0, 0);
+    scene.add(model);
   });
 
-  scene.children.forEach(obj => {
-    if (infoText[obj.name]) {
-      obj.traverse(child => {
-        if (child.isMesh) {
-          child.material.emissive && (child.material.emissive.setHex(obj === intersectedComponent ? highlightColor : 0x000000));
-        }
-      });
-    }
+  // 2. Schallschutzmatte
+  loader.load('./models/Daemmmatte.glb', (gltf) => {
+    const model = gltf.scene;
+    model.scale.set(0.2, 0.2, 0.2);
+    model.position.set(-2.5, 0, 0);
+    scene.add(model);
   });
 
-  if (intersectedComponent) {
-    document.getElementById('infoBox').style.display = 'block';
-    document.getElementById('infoBox').innerHTML =
-      `<strong style="color:#007BFF;">${intersectedComponent.name}</strong><br>${infoText[intersectedComponent.name]}`;
-  } else {
-    document.getElementById('infoBox').style.display = 'none';
-  }
+  // 3. Ventilatoreinheit
+  loader.load('./models/Ventilatoreinheit.glb', (gltf) => {
+    const model = gltf.scene;
+    model.scale.set(0.2, 0.2, 0.2);
+    model.position.set(-2.0, 0, 0);
+    scene.add(model);
+  });
 
-  renderer.render(scene, camera);
+  // 4. Wärmetauscher
+  loader.load('./models/Patrone.glb', (gltf) => {
+    const model = gltf.scene;
+    model.scale.set(0.2, 0.2, 0.2);
+    model.position.set(-1.5, 0, 0);
+    scene.add(model);
+  });
+
+  // 5. Filterhalterung
+  loader.load('./models/Filterhalterung.glb', (gltf) => {
+    const model = gltf.scene;
+    model.scale.set(0.2, 0.2, 0.2);
+    model.position.set(-1.0, 0, 0);
+    scene.add(model);
+  });
+
+  // 6. Außenhaube (ganz rechts, vor Kamera)
+  loader.load('./models/Aussenhaube.glb', (gltf) => {
+    const model = gltf.scene;
+    model.scale.set(0.2, 0.2, 0.2);
+    model.position.set(-0.5, 0, 0);
+    scene.add(model);
+  });
+
+  // Fenster-Resize
+  window.addEventListener('resize', onWindowResize);
 }
 
 function onWindowResize() {
@@ -114,20 +96,8 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function createInfoBox() {
-  const infoBox = document.createElement('div');
-  infoBox.id = 'infoBox';
-  infoBox.style.position = 'absolute';
-  infoBox.style.bottom = '20px';
-  infoBox.style.left = '20px';
-  infoBox.style.padding = '12px 16px';
-  infoBox.style.backgroundColor = 'rgba(255,255,255,0.95)';
-  infoBox.style.border = '1px solid #007BFF';
-  infoBox.style.borderRadius = '8px';
-  infoBox.style.color = '#000';
-  infoBox.style.fontFamily = 'Arial, sans-serif';
-  infoBox.style.fontSize = '14px';
-  infoBox.style.display = 'none';
-  infoBox.style.zIndex = '100';
-  document.body.appendChild(infoBox);
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
 }
