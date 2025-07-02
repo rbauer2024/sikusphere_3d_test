@@ -1,57 +1,60 @@
 import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
 
-let scene, camera, renderer;
+let camera, scene, renderer;
 
 init();
 animate();
 
 function init() {
   scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xffffff);
 
-  // Kamera optimiert
-  camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(-12, 4, 2);
-  camera.lookAt(0, 1.2, 0);
+  // Kamera etwas näher, zentraler
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(-2.5, 1.4, 2.2); // leicht links + etwas höher + näher dran
+  camera.lookAt(0, 1.2, 0);           // Fokus zentral auf Modellhöhe
 
-  // Renderer mit besserem Encoding
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.outputEncoding = THREE.sRGBEncoding;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.2;
-  document.body.appendChild(renderer.domElement);
-
-  // Lichtquellen für Details
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  // Licht
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
   scene.add(ambientLight);
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);
-  directionalLight.position.set(5, 10, 5);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  directionalLight.position.set(10, 10, 10);
   scene.add(directionalLight);
 
-  // Positionen der Bauteile (leicht auseinandergezogen, Explosionsdarstellung)
-  const componentData = [
-    { file: 'models/Steuereinheit.glb', position: [-4, 0, 0] },
-    { file: 'models/Daemmmatte.glb', position: [-2, 0, 0] },
-    { file: 'models/Ventilatoreinheit.glb', position: [0, 0, 0] },
-    { file: 'models/Patrone.glb', position: [2, 0, 0] },
-    { file: 'models/Aussenhaube.glb', position: [4, 0, 0] },
+  // Renderer mit hoher Qualität
+  renderer = new THREE.WebGLRenderer({ antialias: true, precision: 'highp' });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  document.body.appendChild(renderer.domElement);
+
+  // Modelle laden
+  const loader = new GLTFLoader();
+  const modelScale = 0.24;
+  const spacing = 0.12; // gleichmäßiger Abstand zwischen Komponenten
+
+  const parts = [
+    { file: 'Steuereinheit.glb', x: 0 },
+    { file: 'Daemmmatte.glb', x: spacing * 1 },
+    { file: 'Ventilatoreinheit.glb', x: spacing * 2 },
+    { file: 'Patrone.glb', x: spacing * 3 },
+    { file: 'Aussenhaube.glb', x: spacing * 4 }
   ];
 
-  // Laden der Bauteile
-  const loader = new GLTFLoader();
-  componentData.forEach((comp) => {
-    loader.load(comp.file, function (gltf) {
+  parts.forEach((part) => {
+    loader.load(`models/${part.file}`, (gltf) => {
       const model = gltf.scene;
-      model.scale.set(0.2, 0.2, 0.2);
-      model.rotation.y = THREE.MathUtils.degToRad(-15); // korrekte Ausrichtung
-      model.position.set(...comp.position);
+      model.scale.set(modelScale, modelScale, modelScale);
+      model.position.set(part.x, 0, 0);
+      model.rotation.y = Math.PI; // 180°-Drehung für richtige Reihenfolge
       scene.add(model);
     });
   });
 
-  window.addEventListener('resize', onWindowResize, false);
+  window.addEventListener('resize', onWindowResize);
 }
 
 function onWindowResize() {
