@@ -43,8 +43,8 @@ function init() {
     loader.load(`models/${part.file}`, (gltf) => {
       const model = gltf.scene;
       model.scale.set(modelScale, modelScale, modelScale);
-      model.rotation.y = Math.PI;
       model.position.set(0, 0, 0); // Startposition: geschlossen
+      model.rotation.y = Math.PI;
 
       model.traverse((child) => {
         if (child.isMesh) {
@@ -58,16 +58,27 @@ function init() {
         }
       });
 
-      models[index] = model;
       scene.add(model);
+      models[index] = model;
 
-      if (models.filter(Boolean).length === parts.length) {
-        triggerAnimation();
+      if (models.length === parts.length) {
+        setTimeout(triggerAnimation, 3000);
       }
     });
   });
 
   window.addEventListener('resize', onWindowResize);
+}
+
+function triggerAnimation() {
+  const endPositions = models.map((_, i) => spacing * i);
+  models.forEach((model, i) => {
+    gsap.to(model.position, {
+      x: endPositions[i],
+      duration: 1.5,
+      ease: "power2.out"
+    });
+  });
 }
 
 function onWindowResize() {
@@ -79,42 +90,4 @@ function onWindowResize() {
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
-}
-
-function triggerAnimation() {
-  const duration = 1.5;
-  const steps = 60;
-  let frame = 0;
-
-  const startCam = { x: -3.5, y: 1.2, z: 3 };
-  const endCam = { x: -2.5, y: 1.3, z: 2.4 };
-
-  const startPositions = models.map(() => 0);
-  const endPositions = models.map((_, i) => spacing * i);
-
-  const animateStep = () => {
-    const t = frame / steps;
-
-    camera.position.set(
-      lerp(startCam.x, endCam.x, t),
-      lerp(startCam.y, endCam.y, t),
-      lerp(startCam.z, endCam.z, t)
-    );
-    camera.lookAt(0, 1.2, 0);
-
-    models.forEach((model, i) => {
-      model.position.x = lerp(startPositions[i], endPositions[i], t);
-    });
-
-    frame++;
-    if (frame <= steps) requestAnimationFrame(animateStep);
-  };
-
-  setTimeout(() => {
-    animateStep();
-  }, 3000);
-}
-
-function lerp(start, end, t) {
-  return start + (end - start) * t;
 }
