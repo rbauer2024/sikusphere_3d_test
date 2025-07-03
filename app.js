@@ -1,6 +1,5 @@
 import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
-import { gsap } from './libs/gsap.min.js';
 
 let camera, scene, renderer;
 const models = [];
