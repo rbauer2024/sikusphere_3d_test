@@ -11,8 +11,9 @@ function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf4f4f4);
 
+  // 🔭 Fixe Endposition der Kamera – schon beim Start
   camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(-2.0, 1.0, 2.5); // Startposition näher dran
+  camera.position.set(-3.5, 1.2, 3.0);
   camera.lookAt(0, 1.2, 0);
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
@@ -29,23 +30,28 @@ function init() {
 
   const loader = new GLTFLoader();
   const modelScale = 0.2;
-  const spacing = 0.12;
+
+  // 🔩 Start: fast zusammen (enger Abstand)
+  const initialSpacing = 0.03;
+  const explodeSpacing = 0.12;
 
   const parts = [
-    { file: 'Steuereinheit.glb', x: 0 },
-    { file: 'Daemmmatte.glb', x: 0 },
-    { file: 'Ventilatoreinheit.glb', x: 0 },
-    { file: 'Patrone.glb', x: 0 },
-    { file: 'Aussenhaube.glb', x: 0 }
+    'Steuereinheit.glb',
+    'Daemmmatte.glb',
+    'Ventilatoreinheit.glb',
+    'Patrone.glb',
+    'Aussenhaube.glb'
   ];
 
   let loadedCount = 0;
 
-  parts.forEach((part, index) => {
-    loader.load(`models/${part.file}`, (gltf) => {
+  parts.forEach((file, i) => {
+    loader.load(`models/${file}`, (gltf) => {
       const model = gltf.scene;
       model.scale.set(modelScale, modelScale, modelScale);
-      model.position.set(0, 0, 0); // Start: alles zusammen
+
+      // 🔩 Startposition eng zusammen (z. B. 0.03 statt 0.12)
+      model.position.set(i * initialSpacing, 0, 0);
       model.rotation.y = Math.PI;
 
       model.traverse((child) => {
@@ -61,12 +67,11 @@ function init() {
       });
 
       scene.add(model);
-      models[index] = model;
+      models[i] = model;
       loadedCount++;
 
       if (loadedCount === parts.length) {
-        // Alle Modelle geladen – Animation nach 3 Sekunden starten
-        setTimeout(triggerAnimation, 3000);
+        setTimeout(() => triggerExplosion(explodeSpacing), 3000);
       }
     });
   });
@@ -74,27 +79,13 @@ function init() {
   window.addEventListener('resize', onWindowResize);
 }
 
-function triggerAnimation() {
-  const spacing = 0.12;
-  const endPositions = models.map((_, i) => spacing * i);
-
+function triggerExplosion(spacing) {
   models.forEach((model, i) => {
     gsap.to(model.position, {
-      x: endPositions[i],
+      x: spacing * i,
       duration: 1.5,
       ease: "power2.out"
     });
-  });
-
-  gsap.to(camera.position, {
-    x: -3.5,
-    y: 1.2,
-    z: 3.0,
-    duration: 1.5,
-    ease: "power2.out",
-    onUpdate: () => {
-      camera.lookAt(0, 1.2, 0);
-    }
   });
 }
 
