@@ -79,9 +79,9 @@ function onWindowResize() {
 }
 
 function onScroll() {
-  const scrollY = window.scrollY;
-  const maxScroll = 300; // Höhe in Pixel, bei der maximale Explosion erreicht ist
-  const factor = Math.min(scrollY / maxScroll, 1); // Skaliert zwischen 0 und 1
+  const scrollY = window.scrollY || 0; // Sicherheitsabfrage
+  const maxScroll = 300;
+  const factor = Math.min(scrollY / maxScroll, 1);
 
   parts.forEach(part => {
     const newX = THREE.MathUtils.lerp(0, part.targetX, factor);
