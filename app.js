@@ -8,10 +8,11 @@ animate();
 
 function init() {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xf4f4f4); // leichtes Grau statt weiß
+  scene.background = new THREE.Color(0xf4f4f4);
 
+  // Kamera näher ran und leicht nach oben verschoben
   camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(-3.5, 1.2, 3); // links und leicht erhöht
+  camera.position.set(-3.0, 1.4, 2.8); // etwas näher als vorher
   camera.lookAt(0, 1.2, 0);
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
@@ -22,12 +23,11 @@ function init() {
   scene.add(directionalLight);
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio); // Schärfe erhöhen
+  renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
   const loader = new GLTFLoader();
-
   const modelScale = 0.2;
   const spacing = 0.12;
 
@@ -44,14 +44,13 @@ function init() {
       const model = gltf.scene;
       model.scale.set(modelScale, modelScale, modelScale);
       model.position.set(part.x, 0, 0);
-      model.rotation.y = Math.PI; // 180° Drehung
+      model.rotation.y = Math.PI;
 
       model.traverse((child) => {
         if (child.isMesh) {
           child.castShadow = true;
           child.receiveShadow = true;
 
-          // GLÄTTUNG und MATERIALOPTIMIERUNG
           child.geometry.computeVertexNormals();
           child.material.flatShading = false;
           child.material.metalness = 0.1;
