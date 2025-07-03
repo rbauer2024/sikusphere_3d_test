@@ -1,18 +1,19 @@
 import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
+import { gsap } from './libs/gsap.min.js';
 
 let camera, scene, renderer;
-const parts = []; // Hier speichern wir jedes geladene Modell mit Zielposition
+const models = [];
 
 init();
 animate();
 
 function init() {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xf4f4f4); // leichtes Grau
+  scene.background = new THREE.Color(0xf4f4f4);
 
   camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(-3.2, 1.3, 2.5); // neue, leicht gedrehte und nähere Position
+  camera.position.set(-3.5, 1.2, 3);
   camera.lookAt(0, 1.2, 0);
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
@@ -31,22 +32,22 @@ function init() {
   const modelScale = 0.2;
   const spacing = 0.12;
 
-  const partFiles = [
-    'Steuereinheit.glb',
-    'Daemmmatte.glb',
-    'Ventilatoreinheit.glb',
-    'Patrone.glb',
-    'Aussenhaube.glb'
+  const parts = [
+    { file: 'Steuereinheit.glb' },
+    { file: 'Daemmmatte.glb' },
+    { file: 'Ventilatoreinheit.glb' },
+    { file: 'Patrone.glb' },
+    { file: 'Aussenhaube.glb' }
   ];
 
-  partFiles.forEach((file, index) => {
-    loader.load(`models/${file}`, gltf => {
+  parts.forEach((part, index) => {
+    loader.load(`models/${part.file}`, (gltf) => {
       const model = gltf.scene;
       model.scale.set(modelScale, modelScale, modelScale);
-      model.position.set(0, 0, 0); // Start: geschlossen
+      model.position.set(0, 0, 0); // initial geschlossen
       model.rotation.y = Math.PI;
 
-      model.traverse(child => {
+      model.traverse((child) => {
         if (child.isMesh) {
           child.castShadow = true;
           child.receiveShadow = true;
@@ -58,35 +59,30 @@ function init() {
         }
       });
 
+      model.userData.targetX = index * spacing; // Zielposition speichern
       scene.add(model);
-
-      // Speichern der Zielposition
-      parts.push({
-        model: model,
-        targetX: spacing * index
-      });
+      models.push(model);
     });
   });
 
   window.addEventListener('resize', onWindowResize);
-  window.addEventListener('scroll', onScroll);
+
+  // 🔁 Explosion nach 3 Sekunden starten
+  setTimeout(() => {
+    models.forEach((model) => {
+      gsap.to(model.position, {
+        x: model.userData.targetX,
+        duration: 1.5,
+        ease: "power2.out"
+      });
+    });
+  }, 3000);
 }
 
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-function onScroll() {
-  const scrollY = window.scrollY || 0; // Sicherheitsabfrage
-  const maxScroll = 300;
-  const factor = Math.min(scrollY / maxScroll, 1);
-
-  parts.forEach(part => {
-    const newX = THREE.MathUtils.lerp(0, part.targetX, factor);
-    part.model.position.x = newX;
-  });
 }
 
 function animate() {
