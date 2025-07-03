@@ -2,9 +2,7 @@ import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
 
 let camera, scene, renderer;
-const models = [];
-const spacing = 0.12;
-const modelScale = 0.2;
+let models = [];
 
 init();
 animate();
@@ -14,7 +12,7 @@ function init() {
   scene.background = new THREE.Color(0xf4f4f4);
 
   camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(-3.5, 1.2, 3);
+  camera.position.set(-2.0, 1.0, 2.5); // Startposition näher dran
   camera.lookAt(0, 1.2, 0);
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
@@ -30,20 +28,24 @@ function init() {
   document.body.appendChild(renderer.domElement);
 
   const loader = new GLTFLoader();
+  const modelScale = 0.2;
+  const spacing = 0.12;
 
   const parts = [
-    { file: 'Steuereinheit.glb' },
-    { file: 'Daemmmatte.glb' },
-    { file: 'Ventilatoreinheit.glb' },
-    { file: 'Patrone.glb' },
-    { file: 'Aussenhaube.glb' }
+    { file: 'Steuereinheit.glb', x: 0 },
+    { file: 'Daemmmatte.glb', x: 0 },
+    { file: 'Ventilatoreinheit.glb', x: 0 },
+    { file: 'Patrone.glb', x: 0 },
+    { file: 'Aussenhaube.glb', x: 0 }
   ];
+
+  let loadedCount = 0;
 
   parts.forEach((part, index) => {
     loader.load(`models/${part.file}`, (gltf) => {
       const model = gltf.scene;
       model.scale.set(modelScale, modelScale, modelScale);
-      model.position.set(0, 0, 0); // Startposition: geschlossen
+      model.position.set(0, 0, 0); // Start: alles zusammen
       model.rotation.y = Math.PI;
 
       model.traverse((child) => {
@@ -60,8 +62,10 @@ function init() {
 
       scene.add(model);
       models[index] = model;
+      loadedCount++;
 
-      if (models.length === parts.length) {
+      if (loadedCount === parts.length) {
+        // Alle Modelle geladen – Animation nach 3 Sekunden starten
         setTimeout(triggerAnimation, 3000);
       }
     });
@@ -71,13 +75,26 @@ function init() {
 }
 
 function triggerAnimation() {
+  const spacing = 0.12;
   const endPositions = models.map((_, i) => spacing * i);
+
   models.forEach((model, i) => {
     gsap.to(model.position, {
       x: endPositions[i],
       duration: 1.5,
       ease: "power2.out"
     });
+  });
+
+  gsap.to(camera.position, {
+    x: -3.5,
+    y: 1.2,
+    z: 3.0,
+    duration: 1.5,
+    ease: "power2.out",
+    onUpdate: () => {
+      camera.lookAt(0, 1.2, 0);
+    }
   });
 }
 
