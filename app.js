@@ -32,7 +32,7 @@ function init() {
   const modelScale = 0.2;
 
   // 🔩 Start: fast zusammen (enger Abstand)
-  const initialSpacing = 0.0;
+  const initialSpacing = -1.0;
   const explodeSpacing = 0.12;
 
   const parts = [
