@@ -1,65 +1,79 @@
 import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf2f2f2); // hellgrau statt weiß
+let camera, scene, renderer;
 
-// Kamera
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.set(-3.5, 1.5, 3.5); // leicht schräg von oben links
-camera.lookAt(0, 1.2, 0);
+init();
+animate();
 
-// Renderer
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
-document.body.appendChild(renderer.domElement);
+function init() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf4f4f4); // leichtes Grau statt weiß
 
-// Licht
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // vorher 1.2
-scene.add(ambientLight);
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(-3.5, 1.2, 3); // links und leicht erhöht
+  camera.lookAt(0, 1.2, 0);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.4); // vorher 0.5
-directionalLight.position.set(10, 10, 10);
-scene.add(directionalLight);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+  scene.add(ambientLight);
 
-// Abstand & Skalierung
-const positions = [-0.24, -0.12, 0, 0.12, 0.24]; // 5 Teile
-const scaleFactor = 0.2;
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  directionalLight.position.set(10, 10, 10);
+  scene.add(directionalLight);
 
-// Dateinamen in Lade-Reihenfolge (von innen nach außen)
-const files = [
-  'Steuereinheit.glb',
-  'Daemmmatte.glb',
-  'Ventilatoreinheit.glb',
-  'Patrone.glb',
-  'Aussenhaube.glb'
-];
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio); // Schärfe erhöhen
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
 
-// Modelle laden
-const loader = new GLTFLoader();
-files.forEach((file, index) => {
-  loader.load(`./models/${file}`, (gltf) => {
-    const model = gltf.scene;
-    model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-    model.rotation.y = Math.PI; // 180°
-    model.position.x = positions[index];
-    scene.add(model);
+  const loader = new GLTFLoader();
+
+  const modelScale = 0.2;
+  const spacing = 0.12;
+
+  const parts = [
+    { file: 'Steuereinheit.glb', x: 0 },
+    { file: 'Daemmmatte.glb', x: spacing * 1 },
+    { file: 'Ventilatoreinheit.glb', x: spacing * 2 },
+    { file: 'Patrone.glb', x: spacing * 3 },
+    { file: 'Aussenhaube.glb', x: spacing * 4 }
+  ];
+
+  parts.forEach((part) => {
+    loader.load(`models/${part.file}`, (gltf) => {
+      const model = gltf.scene;
+      model.scale.set(modelScale, modelScale, modelScale);
+      model.position.set(part.x, 0, 0);
+      model.rotation.y = Math.PI; // 180° Drehung
+
+      model.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+
+          // GLÄTTUNG und MATERIALOPTIMIERUNG
+          child.geometry.computeVertexNormals();
+          child.material.flatShading = false;
+          child.material.metalness = 0.1;
+          child.material.roughness = 0.4;
+          child.material.needsUpdate = true;
+        }
+      });
+
+      scene.add(model);
+    });
   });
-});
 
-// Responsive
-window.addEventListener('resize', () => {
+  window.addEventListener('resize', onWindowResize);
+}
+
+function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-});
+}
 
-// Render-Loop
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
 }
-animate();
