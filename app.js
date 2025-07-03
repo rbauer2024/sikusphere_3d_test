@@ -1,101 +1,82 @@
 import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
 
-let camera, scene, renderer;
-let models = [];
+// Szene, Kamera, Renderer
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf2f2f2);
 
-init();
-animate();
+const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(-3.5, 1.5, 3.5);
+camera.lookAt(0, 1.2, 0);
 
-function init() {
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xf4f4f4);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
 
-  // 🔭 Fixe Endposition der Kamera – schon beim Start
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(-3.5, 1.2, 3.0);
-  camera.lookAt(0, 1.2, 0);
+// Licht
+const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+scene.add(ambientLight);
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
-  scene.add(ambientLight);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+directionalLight.position.set(10, 10, 10);
+scene.add(directionalLight);
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
-  directionalLight.position.set(10, 10, 10);
-  scene.add(directionalLight);
+// Container-Gruppe für Explosion
+const modelGroup = new THREE.Group();
+scene.add(modelGroup);
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+// Modelle laden
+const loader = new GLTFLoader();
 
-  const loader = new GLTFLoader();
-  const modelScale = 0.2;
+const modelFiles = [
+  'models/Steuereinheit.glb',
+  'models/Daemmmatte.glb',
+  'models/Ventilatoreinheit.glb',
+  'models/Patrone.glb',
+  'models/Aussenhaube.glb'
+];
 
-  // 🔩 Start: fast zusammen (enger Abstand)
-  const initialSpacing = -1.0;
-  const explodeSpacing = 0.12;
+const initialSpacing = 0; // Anfangsposition: zusammen
+const targetSpacing = 0.12; // Endposition: auseinander
+const scale = 0.2;
 
-  const parts = [
-    'Steuereinheit.glb',
-    'Daemmmatte.glb',
-    'Ventilatoreinheit.glb',
-    'Patrone.glb',
-    'Aussenhaube.glb'
-  ];
-
-  let loadedCount = 0;
-
-  parts.forEach((file, i) => {
-    loader.load(`models/${file}`, (gltf) => {
-      const model = gltf.scene;
-      model.scale.set(modelScale, modelScale, modelScale);
-
-      // 🔩 Startposition eng zusammen (z. B. 0.03 statt 0.12)
-      model.position.set(i * initialSpacing, 0, 0);
-      model.rotation.y = Math.PI;
-
-      model.traverse((child) => {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-          child.geometry.computeVertexNormals();
-          child.material.flatShading = false;
-          child.material.metalness = 0.1;
-          child.material.roughness = 0.4;
-          child.material.needsUpdate = true;
-        }
-      });
-
-      scene.add(model);
-      models[i] = model;
-      loadedCount++;
-
-      if (loadedCount === parts.length) {
-        setTimeout(() => triggerExplosion(explodeSpacing), 3000);
-      }
-    });
+function loadModel(file, index) {
+  loader.load(file, (gltf) => {
+    const model = gltf.scene;
+    model.scale.set(scale, scale, scale);
+    model.rotation.y = Math.PI; // 180°
+    model.position.set(0, 0, 0); // geschlossen
+    modelGroup.add(model);
   });
-
-  window.addEventListener('resize', onWindowResize);
 }
 
-function triggerExplosion(spacing) {
-  models.forEach((model, i) => {
+modelFiles.forEach((file, i) => {
+  loadModel(file, i);
+});
+
+// Animation starten (Explosion nach 3 Sekunden)
+setTimeout(() => {
+  modelGroup.children.forEach((model, i) => {
     gsap.to(model.position, {
-      x: spacing * i,
+      x: i * targetSpacing,
       duration: 1.5,
-      ease: "power2.out"
+      ease: 'power2.out'
     });
   });
-}
+}, 3000);
 
-function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
+// Rendering
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
 }
+animate();
+
+// Resize
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
