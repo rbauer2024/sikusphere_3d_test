@@ -44,7 +44,7 @@ function init() {
       const model = gltf.scene;
       model.scale.set(modelScale, modelScale, modelScale);
       model.position.set(part.x, 0, 0);
-      model.rotation.y = Math.PI;
+      model.rotation.y = Math.PI - THREE.MathUtils.degToRad(10); // leicht nach links gedreht
 
       model.traverse((child) => {
         if (child.isMesh) {
