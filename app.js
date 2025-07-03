@@ -2,50 +2,52 @@ import * as THREE from './libs/three.module.js';
 import { GLTFLoader } from './libs/GLTFLoader.js';
 
 let camera, scene, renderer;
-const models = [];
 
 init();
 animate();
 
 function init() {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xf4f4f4);
+  scene.background = new THREE.Color(0xf4f4f4); // leichtes Grau
 
+  // Kamera
   camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
   camera.position.set(-3.5, 1.2, 3);
   camera.lookAt(0, 1.2, 0);
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
-  scene.add(ambientLight);
+  // Licht
+  scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  dirLight.position.set(10, 10, 10);
+  scene.add(dirLight);
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
-  directionalLight.position.set(10, 10, 10);
-  scene.add(directionalLight);
-
+  // Renderer
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
+  // Modelle laden
   const loader = new GLTFLoader();
   const modelScale = 0.2;
   const spacing = 0.12;
 
   const parts = [
-    { file: 'Steuereinheit.glb' },
-    { file: 'Daemmmatte.glb' },
-    { file: 'Ventilatoreinheit.glb' },
-    { file: 'Patrone.glb' },
-    { file: 'Aussenhaube.glb' }
+    { file: 'Steuereinheit.glb', x: 0 },
+    { file: 'Daemmmatte.glb', x: spacing * 1 },
+    { file: 'Ventilatoreinheit.glb', x: spacing * 2 },
+    { file: 'Patrone.glb', x: spacing * 3 },
+    { file: 'Aussenhaube.glb', x: spacing * 4 }
   ];
 
   parts.forEach((part, index) => {
     loader.load(`models/${part.file}`, (gltf) => {
       const model = gltf.scene;
       model.scale.set(modelScale, modelScale, modelScale);
-      model.position.set(0, 0, 0); // initial geschlossen
-      model.rotation.y = Math.PI;
+      model.position.set(0, 0, 0); // Startposition: geschlossen
+      model.rotation.y = Math.PI; // 180° drehen (Rückseite nach links)
 
+      // Materialien verbessern
       model.traverse((child) => {
         if (child.isMesh) {
           child.castShadow = true;
@@ -58,24 +60,20 @@ function init() {
         }
       });
 
-      model.userData.targetX = index * spacing; // Zielposition speichern
       scene.add(model);
-      models.push(model);
+
+      // Nach 3 Sekunden auseinanderziehen (Explosion)
+      setTimeout(() => {
+        gsap.to(model.position, {
+          x: part.x,
+          duration: 1.5,
+          ease: "power2.out"
+        });
+      }, 3000);
     });
   });
 
   window.addEventListener('resize', onWindowResize);
-
-  // 🔁 Explosion nach 3 Sekunden starten
-  setTimeout(() => {
-    models.forEach((model) => {
-      gsap.to(model.position, {
-        x: model.userData.targetX,
-        duration: 1.5,
-        ease: "power2.out"
-      });
-    });
-  }, 3000);
 }
 
 function onWindowResize() {
